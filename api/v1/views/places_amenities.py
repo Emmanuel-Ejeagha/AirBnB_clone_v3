@@ -1,53 +1,39 @@
 #!/usr/bin/python3
 """
-route for handling place and amenities linking
+Defines routes for handling the linking and unlinking of amenities to places.
 """
+
 from flask import jsonify, abort
 from os import getenv
-
 from api.v1.views import app_views, storage
 
-
-@app_views.route("/places/<place_id>/amenities",
-                 methods=["GET"],
-                 strict_slashes=False)
+@app_views.route("/places/<place_id>/amenities", methods=["GET"], strict_slashes=False)
 def amenity_by_place(place_id):
     """
-    get all amenities of a place
-    :param place_id: amenity id
-    :return: all amenities
+    Retrieves all amenities linked to a specific place.
+    :param place_id: The ID of the place to retrieve amenities for.
+    :return: JSON response containing all amenities linked to the specified place, or a 404 error if the place is not found.
     """
     fetched_obj = storage.get("Place", str(place_id))
-
     all_amenities = []
-
     if fetched_obj is None:
         abort(404)
-
     for obj in fetched_obj.amenities:
         all_amenities.append(obj.to_json())
-
     return jsonify(all_amenities)
 
-
-@app_views.route("/places/<place_id>/amenities/<amenity_id>",
-                 methods=["DELETE"],
-                 strict_slashes=False)
+@app_views.route("/places/<place_id>/amenities/<amenity_id>", methods=["DELETE"], strict_slashes=False)
 def unlink_amenity_from_place(place_id, amenity_id):
     """
-    unlinks an amenity in a place
-    :param place_id: place id
-    :param amenity_id: amenity id
-    :return: empty dict or error
+    Unlinks an amenity from a place.
+    :param place_id: The ID of the place to unlink the amenity from.
+    :param amenity_id: The ID of the amenity to unlink.
+    :return: Empty JSON response with status code 201 on success, or a 404 error if the place or amenity is not found.
     """
-    if not storage.get("Place", str(place_id)):
+    if not storage.get("Place", str(place_id)) or not storage.get("Amenity", str(amenity_id)):
         abort(404)
-    if not storage.get("Amenity", str(amenity_id)):
-        abort(404)
-
     fetched_obj = storage.get("Place", place_id)
     found = 0
-
     for obj in fetched_obj.amenities:
         if str(obj.id) == amenity_id:
             if getenv("HBNB_TYPE_STORAGE") == "db":
@@ -57,7 +43,6 @@ def unlink_amenity_from_place(place_id, amenity_id):
             fetched_obj.save()
             found = 1
             break
-
     if found == 0:
         abort(404)
     else:
@@ -65,41 +50,31 @@ def unlink_amenity_from_place(place_id, amenity_id):
         resp.status_code = 201
         return resp
 
-
-@app_views.route("/places/<place_id>/amenities/<amenity_id>",
-                 methods=["POST"],
-                 strict_slashes=False)
+@app_views.route("/places/<place_id>/amenities/<amenity_id>", methods=["POST"], strict_slashes=False)
 def link_amenity_to_place(place_id, amenity_id):
     """
-    links a amenity with a place
-    :param place_id: place id
-    :param amenity_id: amenity id
-    :return: return Amenity obj added or error
+    Links an amenity to a place.
+    :param place_id: The ID of the place to link the amenity to.
+    :param amenity_id: The ID of the amenity to link.
+    :return: JSON response containing the Amenity object added on success, or a 404 error if the place or amenity is not found.
     """
-
     fetched_obj = storage.get("Place", str(place_id))
     amenity_obj = storage.get("Amenity", str(amenity_id))
     found_amenity = None
-
     if not fetched_obj or not amenity_obj:
         abort(404)
-
+        
     for obj in fetched_obj.amenities:
         if str(obj.id) == amenity_id:
             found_amenity = obj
             break
-
     if found_amenity is not None:
         return jsonify(found_amenity.to_json())
-
     if getenv("HBNB_TYPE_STORAGE") == "db":
         fetched_obj.amenities.append(amenity_obj)
     else:
         fetched_obj.amenities = amenity_obj
-
     fetched_obj.save()
-
     resp = jsonify(amenity_obj.to_json())
     resp.status_code = 201
-
     return resp
