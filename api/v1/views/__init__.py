@@ -1,11 +1,14 @@
 #!/usr/bin/python3
-"""This module define a blueprint for routes with Blueprint object"""
-
+"""
+This module defines a blueprint for routes using the Flask Blueprint object.
+"""
 
 from flask import Blueprint
 
-app_views = Blueprint('/api/v1', __name__, url_prefix="/api/v1")
+# Create a Blueprint object for API version 1
+app_views = Blueprint('api_v1', __name__, url_prefix="/api/v1")
 
+# Import views for various endpoints
 from api.v1.views.index import *
 from api.v1.views.states import *
 from api.v1.views.amenities import *
