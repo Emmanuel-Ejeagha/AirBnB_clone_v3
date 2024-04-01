@@ -1,34 +1,30 @@
 #!/usr/bin/python3
-"""This module implement a rule that returns the status of the application"""
-
+"""
+This module implements routes for retrieving the status and statistics of the application.
+"""
 
 from flask import jsonify
 from api.v1.views import app_views
-
 from models import storage
-
 
 @app_views.route("/status", methods=['GET'], strict_slashes=False)
 def status():
     """
-    status route
-    :return: response with json
+    Returns the status of the application.
+    :return: JSON response containing the status "OK".
     """
     data = {
         "status": "OK"
     }
-
     resp = jsonify(data)
     resp.status_code = 200
-
     return resp
-
 
 @app_views.route("/stats", methods=['GET'], strict_slashes=False)
 def stats():
     """
-    stats of all objs route
-    :return: json of all objs
+    Returns statistics of all objects in the application.
+    :return: JSON response containing the count of each type of object (Amenity, City, Place, Review, State, User).
     """
     data = {
         "amenities": storage.count("Amenity"),
@@ -38,8 +34,6 @@ def stats():
         "states": storage.count("State"),
         "users": storage.count("User"),
     }
-
     resp = jsonify(data)
     resp.status_code = 200
-
     return resp
